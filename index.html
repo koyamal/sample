@@ -19,7 +19,7 @@
   let localStream;
 
   // カメラ映像取得
-  navigator.mediaDevices.getUserMedia({video: true, audio: {echoCancellation : true,echoCancellationType :'system',noiseSuppression : true}})
+  navigator.mediaDevices.getUserMedia({video: true, audio: {echoCancellation : true,echoCancellationType :'system',noiseSuppression :false}})
     .then( stream => {
     // 成功時にvideo要素にカメラ映像をセットし、再生
     const videoElm = document.getElementById('my-video');
