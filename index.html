@@ -7,19 +7,33 @@
   <title>SkyWayチュートリアル</title>
 </head>
 <body>
-  <video id="my-video" width="400px" autoplay muted playsinline></video>
-  <p id="my-id"></p>
+  <div>
+    <input type="text" id="room-id" placeholder="ルームID">
+    <input type="text" id="user-name" placeholder="名前">
+    <button id="make-room">ルーム参加</button>
+  </div>
 
-  <textarea id="their-id"></textarea>
-  <button id="make-call">発信</button>
-  <video id="their-video" width="400px" autoplay playsinline></video>
+  <div>
+    <pre class="messages" id="js-messages"></pre>
+    <input type="text" id="js-local-text">
+    <button id="js-send-trigger">メッセージ送信</button>
+  </div>
+
+  
+  <div class="remote-streams" id="js-remote-streams"></div>
+  <video id="my-video" width="200px" autoplay muted playsinline></video>
+  
 
 
  <script>
   let localStream;
+  let userName = "";
+  const messages = document.getElementById('js-messages');
+  const localText = document.getElementById('js-local-text');
+  const sendButton = document.getElementById('js-send-trigger');
 
   // カメラ映像取得
-  navigator.mediaDevices.getUserMedia({video: true, audio: {echoCancellation : true,echoCancellationType :'system',noiseSuppression :false}})
+  navigator.mediaDevices.getUserMedia({video:true, audio: {echoCancellation : true,echoCancellationType :'system',noiseSuppression : false}})
     .then( stream => {
     // 成功時にvideo要素にカメラ映像をセットし、再生
     const videoElm = document.getElementById('my-video');
@@ -27,52 +41,75 @@
     videoElm.play();
     // 着信時に相手にカメラ映像を返せるように、グローバル変数に保存しておく
     localStream = stream;
+    //stream.getAudioTracks()[0].getSettings()
   }).catch( error => {
     // 失敗時にはエラーログを出力
     console.error('mediaDevice.getUserMedia() error:', error);
     return;
   });
 
-
-  //Peer作成
-const peer = new Peer({
+//Peer作成
+  const peer = new Peer({
     key: '612863e8-d396-4d61-ae08-1f15f07a8a80',
     debug: 3
   });
 
 //PeerID取得
-peer.on('open', () => {
-    document.getElementById('my-id').textContent = peer.id;
-});
+  peer.on('open', () => {
+    //document.getElementById('my-id').textContent = peer.id;
+  });
+
+
+
+
 
 
 // 発信処理
-document.getElementById('make-call').onclick = () => {
-    const theirID = document.getElementById('their-id').value;
-    const mediaConnection = peer.call(theirID, localStream);
-    setEventListener(mediaConnection);
+  document.getElementById('make-room').onclick = () => {
+    const roomID = document.getElementById('room-id').value;
+    const roomOptions = {mode:"mesh",stream:localStream};
+    const meshRoom = peer.joinRoom(roomID,roomOptions);
+    meshRoom.on("open", () => {
+      //document.getElementById('data-text').value="room start";
+    });
+    userName = document.getElementById('user-name').value;
+    setEventListener(meshRoom);   
   };
   
+//const remoteVideos = document.getElementById('js-remote-streams');
   // イベントリスナを設置する関数
-  const setEventListener = mediaConnection => {
-    mediaConnection.on('stream', stream => {
+  const setEventListener = meshRoom => {
+    //meshRoom.on('stream', stream => {
       // video要素にカメラ映像をセットして再生
-      const videoElm = document.getElementById('their-video')
-      videoElm.srcObject = stream;
-      videoElm.play();
+    //  const videoElm = document.getElementById('their-video')
+    //  videoElm.srcObject = stream;
+    //  videoElm.play();
+    meshRoom.on('stream', stream => {
+      const newVideo = document.createElement('video');
+      newVideo.srcObject = stream;
+      newVideo.playsInline = true;
+      newVideo.controls = true;
+      // mark peerId to find it later at peerLeave event
+      newVideo.setAttribute('data-peer-id', stream.peerId);
+      document.getElementById('js-remote-streams').append(newVideo);
+      newVideo.play().catch(console.error);
     });
-  }
+
+    sendButton.onclick = () => {
+      const data =`${userName}: ${localText.value}\n`;
+      messages.textContent += data;
+      meshRoom.send(data);
+      localText.value = "";
+    };
 
 
-  //着信処理
-peer.on('call', mediaConnection => {
-    mediaConnection.answer(localStream);
-    setEventListener(mediaConnection);
-  });
+    meshRoom.on("data", ({ data, src }) => {
+      messages.textContent += data;
+   });
+   
+  };
 
  </script>
-
-<script src="/Users/maruyama/Desktop/te.js"></script>
 
 </body>
 </html>
