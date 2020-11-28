@@ -34,6 +34,7 @@
   const messages = document.getElementById('js-messages');
   const localText = document.getElementById('js-local-text');
   const sendButton = document.getElementById('js-send-trigger');
+  const shareButton = document.getElementById('display_share');
 
   // カメラ映像取得
   navigator.mediaDevices.getUserMedia({video:true, audio: {echoCancellation : true,echoCancellationType :'system',noiseSuppression : false}})
