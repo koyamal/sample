@@ -18,10 +18,11 @@
     <input type="text" id="js-local-text">
     <button id="js-send-trigger">メッセージ送信</button>
   </div>
-  
+
   <div>
     <button id="display_share">画面共有</button>
   </div>
+
   
   <div class="remote-streams" id="js-remote-streams"></div>
   <video id="my-video" width="200px" autoplay muted playsinline></video>
@@ -30,6 +31,7 @@
 
  <script>
   let localStream;
+  let localStreams;
   let userName = "";
   const messages = document.getElementById('js-messages');
   const localText = document.getElementById('js-local-text');
@@ -45,6 +47,8 @@
     videoElm.play();
     // 着信時に相手にカメラ映像を返せるように、グローバル変数に保存しておく
     localStream = stream;
+    localStreams = stream;
+    const vTracks = localStreams.getVideoTracks();
     //stream.getAudioTracks()[0].getSettings()
   }).catch( error => {
     // 失敗時にはエラーログを出力
@@ -105,13 +109,27 @@
       meshRoom.send(data);
       localText.value = "";
     };
-    
-      shareButton.onclick = () => {
-      const sstream = navigator.mediaDevices.getDisplayMedia({ video: true });
-      //const roomID = document.getElementById('room-id').value;
-      //const roomOptions = {mode:"mesh",stream:sstream};
-      //const meshRoom = peer.joinRoom(roomID,roomOptions);
-      meshRoom.replaceStream(sstream);
+
+
+    shareButton.onclick = () => {
+      navigator.mediaDevices.getDisplayMedia({video:true,audio:true})
+      .then( stream => {
+      // 成功時にvideo要素にカメラ映像をセットし、再生
+      const videoElm = document.getElementById('my-video');
+      videoElm.srcObject = stream;
+      videoElm.play();
+      // 着信時に相手にカメラ映像を返せるように、グローバル変数に保存しておく
+      //localStream = stream;
+      localStreams = stream;
+      const vTracks = localStreams.getVideoTracks();
+      meshRoom.replaceStream(localStreams);
+      //stream.getAudioTracks()[0].getSettings()
+      }).catch( error => {
+     // 失敗時にはエラーログを出力
+     console.error('mediaDevice.getUserMedia() error:', error);
+     return;
+     });
+  
     };
 
 
