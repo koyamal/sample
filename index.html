@@ -18,7 +18,10 @@
     <input type="text" id="js-local-text">
     <button id="js-send-trigger">メッセージ送信</button>
   </div>
-
+  
+  <div>
+    <button id="display_share">画面共有</button>
+  </div>
   
   <div class="remote-streams" id="js-remote-streams"></div>
   <video id="my-video" width="200px" autoplay muted playsinline></video>
@@ -100,6 +103,13 @@
       messages.textContent += data;
       meshRoom.send(data);
       localText.value = "";
+    };
+    
+      shareButton.onclick = () => {
+      const sstream = navigator.mediaDevices.getDisplayMedia({ video: true });
+      const roomID = document.getElementById('room-id').value;
+      const roomOptions = {mode:"mesh",stream:sstream};
+      const meshRoom = peer.joinRoom(roomID,roomOptions);
     };
 
 
